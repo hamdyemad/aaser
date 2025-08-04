@@ -24,6 +24,7 @@ class EpisodeController extends Controller
     {
         $per_page = $request->per_page ?? 20;
         $episodes = Episode::latest()->paginate($per_page);
+
         EpisodeResource::collection($episodes);
 
         return $this->sendRes('All Episodes Return Successfully', true, $episodes, [], 200);
@@ -124,9 +125,15 @@ class EpisodeController extends Controller
     public function show($id)
     {
         $episode = Episode::findorFail($id);
+        $related_episodes = Episode::inRandomOrder()->where('id', '!=', $id)->take(10)->get();
+        $related_episodes = EpisodeResource::collection($related_episodes);
         $episode = new EpisodeResource($episode);
+        $data = [
+            'episode' => $episode,
+            'related_episodes' => $related_episodes,
+        ];
 
-        return $this->sendRes('Episode Return Successfully', true, $episode, [], 200);
+        return $this->sendRes('Episode Return Successfully', true, $data, [], 200);
 
 
     }

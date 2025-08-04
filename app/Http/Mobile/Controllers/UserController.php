@@ -29,6 +29,7 @@ use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\AddPointToUserRequest;
 use App\Traits\Res;
 use Exception;
+use Illuminate\Support\Facades\Validator;
 
 class UserController extends Controller
 {
@@ -124,6 +125,51 @@ class UserController extends Controller
         }
     }
 
+    public function getProfile(Request $request)
+    {
+        $auth = auth()->user();
+        return $this->sendRes('Profile Returned Successfully', true, new UserResource($auth), [], 200);
+    }
+
+    public function editProfile(Request $request)
+    {
+
+        $auth = auth()->user();
+        $validator = Validator::make($request->all(), [
+            'name' => 'nullable|string|max:255',
+            'email' => 'nullable|unique:users,email,' . $auth->id,
+            'phone' => 'nullable|unique:users,phone,' . $auth->id,
+            'password' => ['nullable','confirmed'],
+            'image' => 'nullable|image',
+            'address' => 'nullable|string|max:255',
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all(); // returns all error messages as an array
+            $combinedMessage = implode('\n', $errors); // join all messages in one line
+            return $this->sendRes($combinedMessage, false, [], $validator->errors(), 422);
+        }
+
+        $data = [];
+        ($request->name) ? $data['name'] = $request->name : null;
+        ($request->email) ? $data['email'] = $request->email : null;
+        ($request->phone) ? $data['phone'] = $request->phone : null;
+        ($request->address) ? $data['address'] = $request->address : null;
+
+        if ($request->file('image')) {
+            if ($auth->image) {
+                Storage::delete($auth->image);
+            }
+            $data['image'] = $request->file('image')->store('users');
+        }
+        if ($request->password) {
+            $data['password'] = Hash::make($request->password);
+        }
+        $auth->update($data);
+        return $this->sendRes('Profile Updated Successfully', true, new UserResource($auth), [], 200);
+
+    }
+
     // End Authentication
 
 
@@ -185,20 +231,10 @@ class UserController extends Controller
     public function viewPoints(Request $request)
     {
         $auth = $request->user();
-        if(auth('user')->check())
-        {
-            $point = Point::with('tracking')->where('user_id',$auth->id)->get();
-            return response()->json([
-                'status' => "Success",
-                'data' => PointResource::collection($point),
-                'message' => 'Point For The User Returned Successfully'
-            ]);
-        }
-        return response()->json([
-            'status' => 'Fail',
-            'data' => [],
-            'message' => 'You Should Be User',
-        ], 422);
+        $per_page = $request->per_page ?? 10;
+        $points = Point::with('tracking')->where('user_id',$auth->id)->get();
+        PointResource::collection($points);
+        return $this->sendRes('Point For The User Returned Successfully', true, $points, [], 200);
     }
 
     public function viewUserPoints($id)
@@ -213,172 +249,6 @@ class UserController extends Controller
 
 
 
-    public function getProfile(Request $request)
-    {
-        $auth = $request->user();
-        return response()->json([
-            'status' => 'Success',
-            'data' => new UserResource(User::findorFail($auth->id)),
-            'message' => 'Profile Returned Successfully',
-        ]);
-    }
-
-    public function viewUser($id)
-    {
-        return response()->json([
-            'status' => 'Success',
-            'data' => new UserResource(User::findorFail($id)),
-            'message' => 'User Returne Successfully',
-        ]);
-    }
-
-    public function logout(Request $request)
-    {
-        $user = $request->user();
-        $user->currentAccessToken()->delete();
-        return response()->json([
-            'status' => 'Success',
-            'data' => [],
-            'message' => 'Logout Successfully',
-        ]);
-    }
-
-    public function edit(EditUserRequest $request)
-    {
-        $auth = $request->user();
-        $user = User::findorFail($auth->id);
-        if($request->file('image'))
-        {
-            if($user->image)
-            {
-                Storage::delete($user->image);
-            }
-        }
-        $image = $request->file('image') ? $request->file('image')->store('users') : $user->image;
-        $password = $request->password ? Hash::make($request->password) : $user->password;
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $password,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'image' => $image,
-        ]);
-        return response()->json([
-            'status' => 'Success',
-            'data' => [],
-            'message' => 'Profile Edit Successfully',
-        ]);
-    }
-
-    public function editUser(EditUserRequest $request, $id)
-    {
-        $auth = $request->user();
-        $user = User::findorFail($id);
-        if($request->file('image'))
-        {
-            if($user->image)
-            {
-                Storage::delete($user->image);
-            }
-        }
-        $image = $request->file('image') ? $request->file('image')->store('users') : $user->image;
-        $password = $request->password ? Hash::make($request->password) : $user->password;
-        $user->update([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => $password,
-            'phone' => $request->phone,
-            'address' => $request->address,
-            'image' => $image,
-        ]);
-        return response()->json([
-            'status' => 'Success',
-            'data' => [],
-            'message' => 'User Edit Successfully',
-        ]);
-    }
 
 
-
-
-
-    public function allUsers(Request $request)
-    {
-        $item = $request->item ?? 20;
-        $users = User::when($request->filled('name'),function($query) use($request){
-            $query->where('name', 'like', "%{$request->name}%");
-        })->paginate($item);
-        return response()->json([
-            'status' => 'Success',
-            'data' => UserResource::collection($users),
-            'message' => 'Users Returned Successfully',
-            'pagination' => [
-                'current_page' => $users->currentPage(),
-                'last_page' => $users->lastPage(),
-                'per_page' => $users->perPage(),
-                'total' => $users->total(),
-            ],
-        ]);
-    }
-
-    public function addViewEpsiode($id)
-    {
-        $epsiode = Episode::findorFail($id);
-        $epsiode->update([
-            'view' => $epsiode->view + 1,
-        ]);
-        return response()->json([
-            'status' => 'Success',
-            'data' => [],
-            'message' => 'View Added Successfully',
-        ]);
-    }
-
-    public function addViewTouristeAttraction($id)
-    {
-        $touriste_attraction = TouristAttraction::findorFail($id);
-        $touriste_attraction->update([
-            'view' => $touriste_attraction->view + 1,
-        ]);
-        return response()->json([
-            'status' => 'Success',
-            'data' => [],
-            'message' => 'View Added Successfully',
-        ]);
-    }
-
-    public function addRateTouristeAttraction(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'rate' => 'required|min:1|max:10',
-        ]);
-        $tourist_attraction = TouristAttraction::findorFail($id);
-        $tourist_attraction_rate = TouristeAttractionRate::create([
-            'tourist_attraction_id' => $tourist_attraction->id,
-            'rate' => $request->rate,
-        ]);
-        return response()->json([
-            'status' => 'Success',
-            'data' => [],
-            'message' => 'Rate Added Successfully',
-        ]);
-    }
-
-    public function addRateGuide(Request $request, $id)
-    {
-        $validated = $request->validate([
-            'rate' => 'required|min:1|max:10',
-        ]);
-        $guide = Guide::findorFail($id);
-        $guide_rate = GuideRate::create([
-            'guide_id' => $guide->id,
-            'rate' => $request->rate,
-        ]);
-        return response()->json([
-            'status' => 'Success',
-            'data' => [],
-            'message' => 'Rate Added Successfully',
-        ]);
-    }
 }

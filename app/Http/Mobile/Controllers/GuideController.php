@@ -149,7 +149,7 @@ class GuideController extends Controller
         $mpdf->WriteHTML($html);
 
         $name_with_ext = 'receipt_' . now()->format('Ymd_His') . '.pdf';
-        $path = "storage/attraction/$name_with_ext";
+        $path = "storage/receipts/$name_with_ext";
         $mpdf->Output(public_path($path), 'F');
         // FOLDER PATH
         // $filePath = public_path($path);

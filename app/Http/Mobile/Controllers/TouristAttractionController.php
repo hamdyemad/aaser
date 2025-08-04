@@ -152,19 +152,27 @@ class TouristAttractionController extends Controller
                     'qty' => $quantity,
                     'date' => $date,
                 ]);
-
                 $touristService->available_count -= $quantity;
                 $touristService->save();
             }
+
+            $reward_request->load(['user', 'requestTouriste.serviceTouristAttraction']);
+            $pdf_data = [
+                'reward_request' => new RewardRequestResource($reward_request),
+            ];
+            $pdf_url = $this->genratePDF($pdf_data);
+            $response_data = [
+                'pdf_url' => $pdf_url,
+            ];
             DB::commit();
-            return $this->sendRes('Service Request Added Successfully', true, [], [], 200);
+            return $this->sendRes('Service Request Added Successfully', true, $response_data, [], 200);
         } catch (\Exception $exception) {
             DB::rollBack();
             return $this->sendRes($exception->getMessage(), false, [], [], 500);
         }
     }
 
-    public function generateArabicPDF($data)
+    public function genratePDF($data)
     {
 
         $mpdf = new Mpdf([
@@ -175,13 +183,19 @@ class TouristAttractionController extends Controller
 
         $mpdf->SetDirectionality('rtl');
 
-        $html = view('receipts.index', $data)->render();
+        $html = view('receipts.tourist_attraction', $data)->render();
         $mpdf->WriteHTML($html);
 
-        // $filePath = public_path('storage/attraction/receipt.pdf');
-        // $mpdf->Output($filePath, 'F');
-        // return $filePath;
-        return response($mpdf->Output('', 'S'))->header('Content-Type', 'application/pdf');
+        $name_with_ext = 'receipt_' . now()->format('Ymd_His') . '.pdf';
+        $path = "storage/receipts/$name_with_ext";
+        $mpdf->Output(public_path($path), 'F');
+        // FOLDER PATH
+        // $filePath = public_path($path);
+        // return response($mpdf->Output('', 'S'))->header('Content-Type', 'application/pdf');
+        // URL PATH
+
+        $pdf_url = asset($path);
+        return $pdf_url;
 
 
 

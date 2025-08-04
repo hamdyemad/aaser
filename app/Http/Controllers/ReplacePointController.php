@@ -53,7 +53,6 @@ class ReplacePointController extends Controller
                 'have_count' => $request->have_count,
                 'count_people' => $request->count_people,
             ]);
-
             $service_provider = ServiceProvider::create([
                 'name' => 'مقدم خدمة ' . $replace_point->name,
                 'email' => $randomEmail,
@@ -124,6 +123,7 @@ class ReplacePointController extends Controller
                     ]);
                 }
             }
+
             if($request->name)
             {
                 $reward_images = $request->reward_image ?? [];
@@ -139,11 +139,12 @@ class ReplacePointController extends Controller
                         'qty' => $request->qty[$key],
                         'available' => $request->available[$key],
                         'residual' => $request->qty[$key],
-                        'appointment' => $request->appointment[$key],
+                        'appointment' => $request->appointment[$key] ?? null,
                         'end_date' => $request->end_date[$key],
                         'image' => $reward_image,
                     ]);
                 }
+
             }
             DB::commit();
         }

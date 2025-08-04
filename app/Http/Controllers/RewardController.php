@@ -140,7 +140,7 @@ class RewardController extends Controller
     public function allReward(Request $request)
     {
         $item = $request->item ?? 20;
-        $rewards = Reward::with('requests','terms')->paginate($item);
+        $rewards = Reward::with('requests','terms')->latest()->paginate($item);
         return response()->json([
             'status' => 'Success',
             'data' => RewardResource::collection($rewards),

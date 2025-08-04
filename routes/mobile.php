@@ -7,8 +7,11 @@ use App\Http\Mobile\Controllers\EpisodeController;
 use App\Http\Mobile\Controllers\ExhibitionConferenceController;
 use App\Http\Mobile\Controllers\GuideController;
 use App\Http\Mobile\Controllers\HomeController;
+use App\Http\Mobile\Controllers\NotificationController;
 use App\Http\Mobile\Controllers\ParticipantController;
+use App\Http\Mobile\Controllers\ReplacePointController;
 use App\Http\Mobile\Controllers\ShepherdController;
+use App\Http\Mobile\Controllers\StockPointController;
 use App\Http\Mobile\Controllers\TouristAttractionController;
 use App\Http\Mobile\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
@@ -20,13 +23,21 @@ Route::group(['prefix' => "auth"], function($router) {
     $router->post('reset_password',[UserController::class,'resetPassword']);
     $router->post('confirm_code',[UserController::class,'confirmCode']);
 
-    // $router->middleware(['auth:sanctum'])->group(function ($router) {
-    //     $router->get('profile',[UserController::class,'getProfile']);
-    //     $router->post('profile',[UserController::class,'edit']);
-    // });
+    $router->middleware(['auth:sanctum'])->group(function ($router) {
+        $router->get('profile',[UserController::class,'getProfile']);
+        $router->post('profile',[UserController::class,'editProfile']);
+        $router->get('view-points',[UserController::class,'viewPoints']);
+    });
 });
 
 $router->middleware(['auth:sanctum'])->group(function ($router) {
+
+
+    $router->group(['prefix' => 'notifications'], function($router) {
+        $router->get('/',[NotificationController::class,'all']);
+        $router->get('/count',[NotificationController::class,'countNotification']);
+    });
+
 
     $router->get('home',[HomeController::class,'index']);
 
@@ -56,6 +67,19 @@ $router->middleware(['auth:sanctum'])->group(function ($router) {
     $router->group(['prefix' => 'entertainment-activities'], function($router) {
         $router->get('/',[EntertainmentActivityController::class,'all']);
         $router->get('/{id}',[EntertainmentActivityController::class,'show']);
+        $router->post('/services',[EntertainmentActivityController::class,'activityService']);
+    });
+
+    $router->group(['prefix' => 'stock-points'], function($router) {
+        $router->get('/',[StockPointController::class,'all']);
+        $router->get('/{id}',[StockPointController::class,'show']);
+        $router->post('/services',[StockPointController::class,'addServiceRequest']);
+    });
+
+    $router->group(['prefix' => 'replace-points'], function($router) {
+        $router->get('/',[ReplacePointController::class,'all']);
+        $router->get('/{id}',[ReplacePointController::class,'show']);
+        $router->post('/services',[ReplacePointController::class,'addReplaceRewardRequest']);
     });
 
 

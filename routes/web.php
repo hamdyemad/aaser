@@ -9,7 +9,7 @@ Route::get('/', function () {
 
 
 Route::get('/test', function () {
-    return view('receipts.index');
+    return view('receipts.entertainment_activity');
 });
 
 Route::get('/make', [TouristAttractionController::class, 'generateArabicPDF']);
