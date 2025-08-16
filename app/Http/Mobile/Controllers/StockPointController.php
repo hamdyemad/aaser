@@ -27,6 +27,7 @@ use App\Http\Requests\AddServiceRequestRequest;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ServiceProvider;
+use App\Services\GeneratePDFService;
 use App\Traits\Res;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -35,6 +36,12 @@ use Mpdf\Mpdf;
 class StockPointController extends Controller
 {
     use Res;
+
+
+    public function __construct(public GeneratePDFService $generatePDFService)
+    {
+    }
+
 
     public function all(Request $request)
     {
@@ -96,7 +103,7 @@ class StockPointController extends Controller
                 }
 
                 if($serviceStockPoint->available_count < 1) {
-                    $validator->errors()->add("date", "the available count of service stock point has reach the maximum");
+                    $validator->errors()->add("qty", "the available count of service stock point has reach the maximum");
                 }
 
             }
@@ -136,9 +143,12 @@ class StockPointController extends Controller
             $pdf_data = [
                 'reward_request' => $reward_request,
             ];
-            $pdf_url = $this->genratePDF($pdf_data);
+
+            $pdf_response = $this->generatePDFService->genPDF($pdf_data, 'request_stock_points');
+
+            $reward_request->update(['invoice' => $pdf_response['path']]);
             $response_data = [
-                'pdf_url' => $pdf_url,
+                'pdf_url' => $pdf_response['full_path'],
             ];
 
             return $this->sendRes('Service Request Added Successfully', true, $response_data, [], 200);
@@ -148,31 +158,4 @@ class StockPointController extends Controller
             return $this->sendRes($exception->getMessage(), false, [], [], 500);
         }
     }
-
-    public function genratePDF($data)
-    {
-
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'default_font' => 'cairo',
-            'format' => 'A4',
-        ]);
-
-        $mpdf->SetDirectionality('rtl');
-
-        $html = view('receipts.request_stock_points', $data)->render();
-        $mpdf->WriteHTML($html);
-
-        $name_with_ext = 'receipt_' . now()->format('Ymd_His') . '.pdf';
-        $path = "storage/receipts/$name_with_ext";
-        $mpdf->Output(public_path($path), 'F');
-        // FOLDER PATH
-        // $filePath = public_path($path);
-        // return response($mpdf->Output('', 'S'))->header('Content-Type', 'application/pdf');
-        // URL PATH
-
-        $pdf_url = asset($path);
-        return $pdf_url;
-    }
-
 }

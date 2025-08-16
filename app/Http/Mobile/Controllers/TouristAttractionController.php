@@ -26,6 +26,7 @@ use App\Http\Requests\TouristAttractionRequest;
 use App\Http\Resources\TouristAttractionResource;
 use App\Http\Requests\EditTouristAttractionRequest;
 use App\Models\TouristeAttractionRate;
+use App\Services\GeneratePDFService;
 use App\Traits\Res;
 use Carbon\Carbon;
 use Elibyy\TCPDF\Facades\TCPDF;
@@ -40,6 +41,10 @@ use Mpdf\Mpdf;
 class TouristAttractionController extends Controller
 {
     use Res;
+
+    public function __construct(public GeneratePDFService $generatePDFService)
+    {
+    }
 
     public function all(Request $request)
     {
@@ -157,12 +162,15 @@ class TouristAttractionController extends Controller
             }
 
             $reward_request->load(['user', 'requestTouriste.serviceTouristAttraction']);
+
             $pdf_data = [
                 'reward_request' => new RewardRequestResource($reward_request),
             ];
-            $pdf_url = $this->genratePDF($pdf_data);
+            $pdf_response = $this->generatePDFService->genPDF($pdf_data, 'tourist_attraction');
+
+            $reward_request->update(['invoice' => $pdf_response['path']]);
             $response_data = [
-                'pdf_url' => $pdf_url,
+                'pdf_url' => $pdf_response['full_path'],
             ];
             DB::commit();
             return $this->sendRes('Service Request Added Successfully', true, $response_data, [], 200);
@@ -170,34 +178,5 @@ class TouristAttractionController extends Controller
             DB::rollBack();
             return $this->sendRes($exception->getMessage(), false, [], [], 500);
         }
-    }
-
-    public function genratePDF($data)
-    {
-
-        $mpdf = new Mpdf([
-            'mode' => 'utf-8',
-            'default_font' => 'cairo',
-            'format' => 'A4',
-        ]);
-
-        $mpdf->SetDirectionality('rtl');
-
-        $html = view('receipts.tourist_attraction', $data)->render();
-        $mpdf->WriteHTML($html);
-
-        $name_with_ext = 'receipt_' . now()->format('Ymd_His') . '.pdf';
-        $path = "storage/receipts/$name_with_ext";
-        $mpdf->Output(public_path($path), 'F');
-        // FOLDER PATH
-        // $filePath = public_path($path);
-        // return response($mpdf->Output('', 'S'))->header('Content-Type', 'application/pdf');
-        // URL PATH
-
-        $pdf_url = asset($path);
-        return $pdf_url;
-
-
-
     }
 }

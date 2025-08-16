@@ -14,8 +14,11 @@ class RequestReplacePointResource extends JsonResource
             'id' => $this->id,
             'request_id' => $this->request_id,
             'replace_reward_id' => $this->replace_reward_id,
+            'rewardRequest' => new RewardRequestResource($this->whenLoaded('rewardRequest')),
             'products_count' => $this->products_count,
+            'replace_date' => $this->replace_date,
             'replace_reward' => new RewardReplacePointResource(RewardReplacePoint::findorFail($this->replace_reward_id)),
+
         ];
     }
 }

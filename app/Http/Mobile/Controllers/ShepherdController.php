@@ -36,7 +36,7 @@ class ShepherdController extends Controller
     {
         $shepherd = Shepherd::with('phone','image','file')->find($id);
         if($shepherd) {
-            return $this->sendRes('Shepherd Return Successfully', true, $shepherd, [], 200);
+            return $this->sendRes('Shepherd Return Successfully', true,new ShepherdResource($shepherd) , [], 200);
         } else {
             return $this->sendRes('Shepherd not found', false, [], [], 404);
         }

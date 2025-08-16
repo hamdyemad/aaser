@@ -24,6 +24,7 @@ use App\Http\Resources\RewardRequestResource;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ServiceProvider;
+use App\Services\GeneratePDFService;
 use App\Traits\Res;
 use Illuminate\Support\Str;
 use Illuminate\Support\Facades\Hash;
@@ -31,6 +32,10 @@ use Illuminate\Support\Facades\Hash;
 class ReplacePointController extends Controller
 {
     use Res;
+
+    public function __construct(public GeneratePDFService $generatePDFService)
+    {
+    }
 
     public function all(Request $request)
     {
@@ -151,6 +156,7 @@ class ReplacePointController extends Controller
                         'request_id' => $reward_request->id,
                         'replace_reward_id' => $rewardId,
                         'products_count' => $request->qty[$key],
+                        'replace_date' => Carbon::parse($request->date[$key]),
                     ]);
 
                     TrackPoint::create([
@@ -160,8 +166,18 @@ class ReplacePointController extends Controller
                     ]);
                 }
 
+                $reward_request->load(['user', 'requestReplacePoint.replaceReward']);
+                $pdf_data = [
+                    'reward_request' => new RewardRequestResource($reward_request),
+                ];
+
+                $pdf_response = $this->generatePDFService->genPDF($pdf_data, 'request_replace_points');
+                $reward_request->update(['invoice' => $pdf_response['path']]);
+                $response_data = [
+                    'pdf_url' => $pdf_response['full_path'],
+                ];
                 DB::commit();
-                return $this->sendRes('Reward Request Added Successfully', true, [], [], 200);
+                return $this->sendRes('Reward Request Added Successfully', true, $response_data, [], 200);
 
             } else {
                 return $this->sendRes('You Do Not Have Enough Points', false, [], [], 422);

@@ -19,6 +19,7 @@ class RewardRequestResource extends JsonResource
             'created_at' => $this->created_at->toDateString(),
             'done_date' => $this->done_date ?? null,
             'request_id' => $this->request_id,
+            'invoice' => ($this->invoice) ? asset('/' . $this->invoice) : '',
             'done_by_service_provider' => $this->done_by_service_provider,
             'reward' => new RewardResource($this->whenLoaded('reward')),
             'visitorExhibitionConference' => new VisitorExhibitionConferenceResource($this->whenLoaded('visitorExhibitionConference')),

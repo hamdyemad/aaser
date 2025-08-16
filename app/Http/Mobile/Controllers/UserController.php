@@ -27,6 +27,10 @@ use App\Models\TouristeAttractionRate;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\AddPointToUserRequest;
+use App\Http\Resources\RequestReplacePointResource;
+use App\Http\Resources\RewardRequestResource;
+use App\Models\RequestReplacePoint;
+use App\Models\RewardRequest;
 use App\Traits\Res;
 use Exception;
 use Illuminate\Support\Facades\Validator;
@@ -232,19 +236,36 @@ class UserController extends Controller
     {
         $auth = $request->user();
         $per_page = $request->per_page ?? 10;
-        $points = Point::with('tracking')->where('user_id',$auth->id)->get();
+        $points = Point::with(['tracking' => function ($query) {
+            $query->latest();
+        }])->where('user_id',$auth->id)->latest()->get();
         PointResource::collection($points);
         return $this->sendRes('Point For The User Returned Successfully', true, $points, [], 200);
     }
 
-    public function viewUserPoints($id)
+
+    public function trackReplacePoints(Request $request)
     {
-        $point = Point::with('tracking')->where('user_id',$id)->get();
-        return response()->json([
-            'status' => "Success",
-            'data' => PointResource::collection($point),
-            'message' => 'Point For The User Returned Successfully'
-        ]);
+        $per_page = $request->per_page ?? 10;
+        $auth = $request->user();
+        $replace_points = RequestReplacePoint::with('rewardRequest')->whereHas('rewardRequest', function ($query) use ($auth) {
+            $query->where('user_id', $auth->id);
+        })->latest()->paginate($per_page);
+
+        RequestReplacePointResource::collection($replace_points);
+
+        return $this->sendRes('Replace Points Tracked Successfully', true, $replace_points, [], 200);
+    }
+
+    public function rewardRequests(Request $request) {
+
+        $per_page = $request->per_page ?? 10;
+        $reward_requests = RewardRequest::with(['provider'])
+            ->where('user_id', $request->user()->id)
+            ->latest()
+            ->paginate($per_page);
+        RewardRequestResource::collection($reward_requests);
+        return $this->sendRes('Reward Requests Retrieved Successfully', true, $reward_requests, [], 200);
     }
 
 

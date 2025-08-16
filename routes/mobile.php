@@ -27,6 +27,8 @@ Route::group(['prefix' => "auth"], function($router) {
         $router->get('profile',[UserController::class,'getProfile']);
         $router->post('profile',[UserController::class,'editProfile']);
         $router->get('view-points',[UserController::class,'viewPoints']);
+        $router->get('replace-points/track',[UserController::class,'trackReplacePoints']);
+        $router->get('reward-requests',[UserController::class,'rewardRequests']);
     });
 });
 
