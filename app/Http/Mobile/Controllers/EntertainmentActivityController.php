@@ -26,6 +26,8 @@ use App\Http\Resources\RewardRequestResource;
 use App\Http\Requests\EntertainmentActivityRequest;
 use App\Http\Resources\EntertainmentActivityResource;
 use App\Http\Requests\EditEntertainmentActivityRequest;
+use App\Http\Resources\AdResource;
+use App\Models\Ad;
 use Carbon\Carbon;
 use App\Models\ServiceProvider;
 use App\Services\GeneratePDFService;
@@ -50,7 +52,22 @@ class EntertainmentActivityController extends Controller
         $entertainment_activities = EntertainmentActivity::with('phone', 'file', 'image')
             ->latest()->paginate($per_page);
         EntertainmentActivityResource::collection($entertainment_activities);
-        return $this->sendRes('All Entertainment Activity Return Successfully', true, $entertainment_activities, [], 200);
+
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'entertainment_activity');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'entertainment_activities' => $entertainment_activities,
+        ];
+
+        return $this->sendRes('All Entertainment Activity Return Successfully', true, $data, [], 200);
     }
 
     public function show($id)

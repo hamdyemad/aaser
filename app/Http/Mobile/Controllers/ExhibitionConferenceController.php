@@ -25,6 +25,8 @@ use App\Models\ParticipantExhibitionConference;
 use App\Http\Requests\ExhibitionConferenceRequest;
 use App\Http\Resources\ExhibitionConferenceResource;
 use App\Http\Requests\EditExhibitionConferenceRequest;
+use App\Http\Resources\AdResource;
+use App\Models\Ad;
 use App\Models\ServiceProvider;
 use App\Traits\Res;
 use Illuminate\Support\Facades\Validator;
@@ -43,7 +45,21 @@ class ExhibitionConferenceController extends Controller
         $ExhibitionConference = ExhibitionConference::with('phone','email','image','file','visitor','participant','provider')
         ->latest()->paginate($per_page);
         ExhibitionConferenceResource::collection($ExhibitionConference);
-        return $this->sendRes('All Exhibition Conference Return Successfully', true, $ExhibitionConference, [], 200);
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'exhibition_conference');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'exhibition_conference' => $ExhibitionConference,
+        ];
+
+        return $this->sendRes('All Exhibition Conference Return Successfully', true, $data, [], 200);
 
     }
 

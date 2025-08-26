@@ -19,9 +19,11 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Requests\GuideRequest;
 use App\Http\Resources\GuideResource;
 use App\Http\Requests\EditGuideRequest;
+use App\Http\Resources\AdResource;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\GuideTypeResource;
 use App\Http\Resources\RewardRequestResource;
+use App\Models\Ad;
 use App\Models\RequestGuide;
 use App\Models\RewardRequest;
 use App\Models\ServiceProvider;
@@ -53,7 +55,17 @@ class GuideController extends Controller
         $guides = $guides->paginate($per_page);
         $guides_types = GuideTypeResource::collection($guides_types);
         $guides = GuideResource::collection($guides);
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'guide');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
         $data = [
+            'ads' => $ads,
             'guides_types' => $guides_types,
             'guides' => $guides,
         ];

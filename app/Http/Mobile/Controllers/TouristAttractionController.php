@@ -25,6 +25,8 @@ use App\Http\Resources\RewardRequestResource;
 use App\Http\Requests\TouristAttractionRequest;
 use App\Http\Resources\TouristAttractionResource;
 use App\Http\Requests\EditTouristAttractionRequest;
+use App\Http\Resources\AdResource;
+use App\Models\Ad;
 use App\Models\TouristeAttractionRate;
 use App\Services\GeneratePDFService;
 use App\Traits\Res;
@@ -54,7 +56,21 @@ class TouristAttractionController extends Controller
             ->latest()
             ->paginate($per_page);
         TouristAttractionResource::collection($tourist_attractions);
-        return $this->sendRes('All Tourist Attractions Return Successfully', true, $tourist_attractions, [], 200);
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'tourist_attraction');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'tourist_attractions' => $tourist_attractions,
+        ];
+
+        return $this->sendRes('All Tourist Attractions Return Successfully', true, $data, [], 200);
     }
 
 

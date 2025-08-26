@@ -19,8 +19,10 @@ use App\Http\Controllers\Controller;
 use App\Models\ProviderReplacePhone;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\ReplacePointRequest;
+use App\Http\Resources\AdResource;
 use App\Http\Resources\ReplacePointResource;
 use App\Http\Resources\RewardRequestResource;
+use App\Models\Ad;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ServiceProvider;
@@ -43,7 +45,22 @@ class ReplacePointController extends Controller
         $replace_points = ReplacePoint::with('phones', 'terms', 'rewards', 'provider')->latest()->paginate($per_page);
         ReplacePointResource::collection($replace_points);
 
-        return $this->sendRes('All Replace Points Return Successfully', true, $replace_points, [], 200);
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'replace_point');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'replace_points' => $replace_points,
+        ];
+
+
+        return $this->sendRes('All Replace Points Return Successfully', true, $data, [], 200);
     }
 
 

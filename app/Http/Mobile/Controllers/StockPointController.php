@@ -24,6 +24,8 @@ use App\Http\Requests\StockPointRequest;
 use App\Http\Resources\StockPointResource;
 use App\Http\Resources\RewardRequestResource;
 use App\Http\Requests\AddServiceRequestRequest;
+use App\Http\Resources\AdResource;
+use App\Models\Ad;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 use App\Models\ServiceProvider;
@@ -48,7 +50,20 @@ class StockPointController extends Controller
         $per_page = $request->per_page ?? 20;
         $stock_points = StockPoint::with('phones','terms','services','image','file','provider')->latest()->paginate($per_page);
         StockPointResource::collection($stock_points);
-        return $this->sendRes('Stock Points Retuned Successfully', true, $stock_points, [], 200);
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'stoke_points');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'stock_points' => $stock_points,
+        ];
+        return $this->sendRes('Stock Points Retuned Successfully', true, $data, [], 200);
     }
 
 
@@ -56,7 +71,7 @@ class StockPointController extends Controller
     {
         $stock_point = StockPoint::with('phones','terms','services','image','file','provider')->findorFail($id);
         if($stock_point) {
-            return $this->sendRes('Stock Point Return Successfully', true, $stock_point, [], 200);
+            return $this->sendRes('Stock Point Return Successfully', true, new StockPointResource($stock_point), [], 200);
         } else {
             return $this->sendRes('Stock Point not found', false, [], [], 404);
         }

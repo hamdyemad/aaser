@@ -9,7 +9,10 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\AsserHistoryRequest;
 use App\Http\Resources\AsserHistoryResource;
 use App\Http\Requests\EditAsserHistoryRequest;
+use App\Http\Resources\AdResource;
+use App\Models\Ad;
 use App\Traits\Res;
+use Carbon\Carbon;
 
 class AsserHistoryController extends Controller
 {
@@ -21,7 +24,20 @@ class AsserHistoryController extends Controller
 
         $histories = AsserHistory::latest()->paginate($per_page);
         AsserHistoryResource::collection($histories);
-        return $this->sendRes('All History Return Successfully', true, $histories, [], 200);
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'asser_history');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'histories' => $histories,
+        ];
+        return $this->sendRes('All History Return Successfully', true, $data, [], 200);
     }
 
     public function show($id)

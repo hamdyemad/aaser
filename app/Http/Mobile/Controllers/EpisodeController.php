@@ -11,6 +11,8 @@ use App\Http\Requests\EpisodeRequest;
 use App\Http\Resources\EpisodeResource;
 use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\EditEpisodeRequest;
+use App\Http\Resources\AdResource;
+use App\Models\Ad;
 use App\Traits\Res;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +29,20 @@ class EpisodeController extends Controller
 
         EpisodeResource::collection($episodes);
 
-        return $this->sendRes('All Episodes Return Successfully', true, $episodes, [], 200);
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'episode');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'episodes' => $episodes,
+        ];
+
+        return $this->sendRes('All Episodes Return Successfully', true, $data, [], 200);
     }
 
     public function add(EpisodeRequest $request)

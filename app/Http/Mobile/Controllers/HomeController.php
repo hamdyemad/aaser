@@ -3,6 +3,7 @@
 namespace App\Http\Mobile\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\AdResource;
 use App\Http\Resources\EntertainmentActivityResource;
 use App\Http\Resources\EpisodeResource;
 use App\Http\Resources\ExhibitionConferenceResource;
@@ -10,6 +11,8 @@ use App\Http\Resources\GuideResource;
 use App\Http\Resources\ParticipantResource;
 use App\Http\Resources\ShepherdResource;
 use App\Http\Resources\TouristAttractionResource;
+use App\Models\Ad;
+use App\Models\AdLocation;
 use App\Models\EntertainmentActivity;
 use App\Models\Episode;
 use App\Models\ExhibitionConference;
@@ -18,6 +21,7 @@ use App\Models\Participant;
 use App\Models\Shepherd;
 use App\Models\TouristAttraction;
 use App\Traits\Res;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Request;
 
 class HomeController extends Controller
@@ -37,6 +41,14 @@ class HomeController extends Controller
         $entertainment_activity_page = $request->entertainment_activity_page ?? 1;
 
 
+
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'home');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
 
         $episodes = Episode::latest()->paginate($per_page, ['*'], $episdoe_page);
         EpisodeResource::collection($episodes);
@@ -73,6 +85,7 @@ class HomeController extends Controller
             'guides' => $guides,
             'exhibition_conferences' => $exhibition_conferences,
             'entertainment_activities' => $entertainment_activities,
+            'ads' => $ads,
         ];
         return $this->sendRes('Data Retrived Success', true, $data, [], 200);
 

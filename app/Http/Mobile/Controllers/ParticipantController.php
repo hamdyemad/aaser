@@ -15,7 +15,10 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\ParticipantRequest;
 use App\Http\Resources\ParticipantResource;
 use App\Http\Requests\EditParticipantRequest;
+use App\Http\Resources\AdResource;
+use App\Models\Ad;
 use App\Traits\Res;
+use Carbon\Carbon;
 
 class ParticipantController extends Controller
 {
@@ -28,7 +31,20 @@ class ParticipantController extends Controller
         $participants = Participant::with('phone','image','file')->OrderBy('id','desc')->paginate($per_page);
         ParticipantResource::collection($participants);
 
-        return $this->sendRes('All Participants Return Successfully', true, $participants, [], 200);
+        $ads = Ad::with('terms','image','file')
+        ->whereDate('end_date', '>', Carbon::now())
+        ->whereDate('start_date', '<', Carbon::now())
+        ->whereHas('locations', function($q) {
+            $q->where('location', 'particiants');
+        })->latest()->get();
+        $ads = AdResource::collection($ads);
+
+        $data = [
+            'ads' => $ads,
+            'participants' => $participants,
+        ];
+
+        return $this->sendRes('All Participants Return Successfully', true, $data, [], 200);
     }
 
 
