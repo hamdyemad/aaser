@@ -21,6 +21,7 @@ class AsserHistoryController extends Controller
     public function all(Request $request)
     {
         $per_page = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
 
         $histories = AsserHistory::latest()->paginate($per_page);
         AsserHistoryResource::collection($histories);
@@ -34,9 +35,12 @@ class AsserHistoryController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'histories' => $histories,
         ];
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
         return $this->sendRes('All History Return Successfully', true, $data, [], 200);
     }
 

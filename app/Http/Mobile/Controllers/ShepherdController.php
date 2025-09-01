@@ -26,7 +26,8 @@ class ShepherdController extends Controller
 
     public function all(Request $request)
     {
-        $per_page = $request->per_page ?? 20;
+        $per_page = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
         $shepherds = Shepherd::with('image','image','file')->latest()->paginate($per_page);
         ShepherdResource::collection($shepherds);
 
@@ -39,9 +40,13 @@ class ShepherdController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'shepherds' => $shepherds,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
 
 
         return $this->sendRes('All Shepherds Return Successfully', true, $data, [], 200);

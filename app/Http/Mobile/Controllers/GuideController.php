@@ -45,7 +45,8 @@ class GuideController extends Controller
 
     public function all(Request $request)
     {
-        $per_page = $request->per_page ?? 20;
+        $per_page = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
         $guides = Guide::with('type', 'offers','phone','image','file')->latest();
         $guides_types = GuideType::all();
         $type_id = $request->type_id ?? '';
@@ -65,10 +66,15 @@ class GuideController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'guides_types' => $guides_types,
             'guides' => $guides,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
+
         return $this->sendRes('All Guide Return Successfully', true, $data, [], 200);
     }
 

@@ -41,6 +41,7 @@ class ExhibitionConferenceController extends Controller
     public function all(Request $request)
     {
         $per_page = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
 
         $ExhibitionConference = ExhibitionConference::with('phone','email','image','file','visitor','participant','provider')
         ->latest()->paginate($per_page);
@@ -55,9 +56,13 @@ class ExhibitionConferenceController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'exhibition_conference' => $ExhibitionConference,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
 
         return $this->sendRes('All Exhibition Conference Return Successfully', true, $data, [], 200);
 

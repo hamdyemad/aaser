@@ -48,6 +48,7 @@ class EntertainmentActivityController extends Controller
     public function all(Request $request)
     {
         $per_page = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
 
         $entertainment_activities = EntertainmentActivity::with('phone', 'file', 'image')
             ->latest()->paginate($per_page);
@@ -63,9 +64,13 @@ class EntertainmentActivityController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'entertainment_activities' => $entertainment_activities,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
 
         return $this->sendRes('All Entertainment Activity Return Successfully', true, $data, [], 200);
     }

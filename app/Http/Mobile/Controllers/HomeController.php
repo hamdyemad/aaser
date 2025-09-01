@@ -22,16 +22,15 @@ use App\Models\Shepherd;
 use App\Models\TouristAttraction;
 use App\Traits\Res;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Request;
+use Illuminate\Http\Request;
+
 
 class HomeController extends Controller
 {
     use Res;
 
     public function index(Request $request) {
-
         $per_page = $request->per_page ?? 12;
-
         $episdoe_page = $request->episdoe_page ?? 1;
         $tourist_attraction_page = $request->tourist_attraction_page ?? 1;
         $shepherd_page = $request->shepherd_page ?? 1;
@@ -41,7 +40,6 @@ class HomeController extends Controller
         $entertainment_activity_page = $request->entertainment_activity_page ?? 1;
 
 
-
         $ads = Ad::with('terms','image','file')
         ->whereDate('end_date', '>', Carbon::now())
         ->whereDate('start_date', '<', Carbon::now())
@@ -49,10 +47,8 @@ class HomeController extends Controller
             $q->where('location', 'home');
         })->latest()->get();
         $ads = AdResource::collection($ads);
-
         $episodes = Episode::latest()->paginate($per_page, ['*'], $episdoe_page);
         EpisodeResource::collection($episodes);
-
         $tourist_attractions = TouristAttraction::with('phone','service','image','file')
         ->latest()
         ->paginate($per_page, ['*'], $tourist_attraction_page);
@@ -85,8 +81,14 @@ class HomeController extends Controller
             'guides' => $guides,
             'exhibition_conferences' => $exhibition_conferences,
             'entertainment_activities' => $entertainment_activities,
-            'ads' => $ads,
+            'ads' => [],
         ];
+        if($episdoe_page <= 1 || $tourist_attraction_page <= 1 || $shepherd_page <= 1 || $participant_page <= 1 ||
+            $guide_page <= 1 || $exhibition_conference_page <= 1 || $entertainment_activity_page <= 1 ) {
+            $data['ads'] = $ads;
+        }
+
+
         return $this->sendRes('Data Retrived Success', true, $data, [], 200);
 
 

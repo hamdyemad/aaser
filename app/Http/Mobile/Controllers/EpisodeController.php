@@ -25,6 +25,7 @@ class EpisodeController extends Controller
     public function all(Request $request)
     {
         $per_page = $request->per_page ?? 20;
+        $page = $request->page ?? 1;
         $episodes = Episode::latest()->paginate($per_page);
 
         EpisodeResource::collection($episodes);
@@ -38,9 +39,12 @@ class EpisodeController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'episodes' => $episodes,
         ];
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
 
         return $this->sendRes('All Episodes Return Successfully', true, $data, [], 200);
     }

@@ -50,7 +50,8 @@ class TouristAttractionController extends Controller
 
     public function all(Request $request)
     {
-        $per_page = $request->per_page ?? 20;
+        $per_page = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
 
         $tourist_attractions = TouristAttraction::with('phone', 'service', 'image', 'file')
             ->latest()
@@ -66,9 +67,14 @@ class TouristAttractionController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'tourist_attractions' => $tourist_attractions,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
+
 
         return $this->sendRes('All Tourist Attractions Return Successfully', true, $data, [], 200);
     }

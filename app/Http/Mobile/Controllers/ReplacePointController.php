@@ -41,7 +41,8 @@ class ReplacePointController extends Controller
 
     public function all(Request $request)
     {
-        $per_page = $request->per_page ?? 20;
+        $per_page = $request->per_page ?? 12;
+        $page = $request->page ?? 1;
         $replace_points = ReplacePoint::with('phones', 'terms', 'rewards', 'provider')->latest()->paginate($per_page);
         ReplacePointResource::collection($replace_points);
 
@@ -55,9 +56,13 @@ class ReplacePointController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'replace_points' => $replace_points,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
 
 
         return $this->sendRes('All Replace Points Return Successfully', true, $data, [], 200);

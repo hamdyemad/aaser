@@ -47,7 +47,8 @@ class StockPointController extends Controller
 
     public function all(Request $request)
     {
-        $per_page = $request->per_page ?? 20;
+        $per_page = $request->per_page ?? 10;
+        $page = $request->page ?? 1;
         $stock_points = StockPoint::with('phones','terms','services','image','file','provider')->latest()->paginate($per_page);
         StockPointResource::collection($stock_points);
 
@@ -60,9 +61,14 @@ class StockPointController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'stock_points' => $stock_points,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
+
         return $this->sendRes('Stock Points Retuned Successfully', true, $data, [], 200);
     }
 

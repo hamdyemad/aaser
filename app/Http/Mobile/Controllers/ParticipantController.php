@@ -27,6 +27,7 @@ class ParticipantController extends Controller
     public function all(Request $request)
     {
         $per_page = $request->per_page ?? 12;
+        $page = $request->page ?? 1;
 
         $participants = Participant::with('phone','image','file')->OrderBy('id','desc')->paginate($per_page);
         ParticipantResource::collection($participants);
@@ -40,9 +41,13 @@ class ParticipantController extends Controller
         $ads = AdResource::collection($ads);
 
         $data = [
-            'ads' => $ads,
+            'ads' => [],
             'participants' => $participants,
         ];
+
+        if($page <= 1) {
+            $data['ads'] = $ads;
+        }
 
         return $this->sendRes('All Participants Return Successfully', true, $data, [], 200);
     }
