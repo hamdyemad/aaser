@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Resources\GuideTypeResource;
 use App\Http\Resources\RewardRequestResource;
 use App\Models\Ad;
+use App\Models\GuideRate;
 use App\Models\RequestGuide;
 use App\Models\RewardRequest;
 use App\Models\ServiceProvider;
@@ -125,8 +126,8 @@ class GuideController extends Controller
         DB::beginTransaction();
         try
         {
-
-            $request_id = rand(1000,9999);
+            $maxRequestId = RewardRequest::max('request_id');
+            $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
             $reward_request = RewardRequest::create([
                 'user_id' => $auth->id,
                 'request_id' => $request_id,
@@ -157,6 +158,31 @@ class GuideController extends Controller
             DB::rollBack();
             return $this->sendRes($exception->getMessage(), false, [], [], 500);
         }
+    }
+
+
+    public function add_rate(Request $request)
+    {
+        $validator = Validator::make($request->all(), [
+            'rate' => 'required|min:1|max:5',
+            'guide_id' => ['required', 'exists:guides,id'],
+        ]);
+
+        if ($validator->fails()) {
+            $errors = $validator->errors()->all(); // returns all error messages as an array
+            $combinedMessage = implode('\n', $errors); // join all messages in one line
+            return $this->sendRes($combinedMessage, false, [], $validator->errors(), 422);
+        }
+
+
+        $guide = Guide::findorFail($request->guide_id);
+        $guide_rate = GuideRate::create([
+            'user_id' => auth()->id(),
+            'guide_id' => $guide->id,
+            'rate' => $request->rate,
+        ]);
+
+        return $this->sendRes('Rate Added Successfully', true, [], [], 200);
     }
 
 

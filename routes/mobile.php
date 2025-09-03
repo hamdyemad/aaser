@@ -103,6 +103,7 @@ $router->group(['prefix' => 'tourist_attractions'], function($router) {
 $router->group(['prefix' => 'guides'], function($router) {
     $router->get('/',[GuideController::class,'all']);
     $router->post('/offers',[GuideController::class,'addOfferRequest'])->middleware('auth:sanctum');
+    $router->post('/rates',[GuideController::class,'add_rate'])->middleware('auth:sanctum');
     $router->get('/{id}',[GuideController::class,'show']);
 });
 

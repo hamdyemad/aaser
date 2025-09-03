@@ -161,7 +161,8 @@ class ReplacePointController extends Controller
             $point = Point::where('user_id', $auth->id)->first();
 
             if ($point && $point->points >= $total_reward_points) {
-                $request_id = rand(1000, 9999);
+                $maxRequestId = RewardRequest::max('request_id');
+                $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
 
                 $reward_request = RewardRequest::create([
                     'user_id' => $auth->id,

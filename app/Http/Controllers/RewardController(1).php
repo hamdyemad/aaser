@@ -45,7 +45,7 @@ class RewardController extends Controller
             'have_count' => $request->have_count,
             'count_people' => $request->count_people,
         ]);
-        
+
         if($request->send_notification == 1)
         {
             $users = User::all();
@@ -57,7 +57,7 @@ class RewardController extends Controller
                 ]);
             }
         }
-        
+
         if($request->terms)
         {
             foreach($request->terms as $term)
@@ -68,7 +68,7 @@ class RewardController extends Controller
                 ]);
             }
         }
-        
+
         return response()->json([
             'status' => 'Success',
             'data' => [],
@@ -93,7 +93,7 @@ class RewardController extends Controller
             'start_date' => $request->start_date,
             'end_date' => $request->end_date,
         ]);
-        
+
         if($request->terms)
         {
             $reward->terms()->delete();
@@ -105,7 +105,7 @@ class RewardController extends Controller
                 ]);
             }
         }
-        
+
         return response()->json([
             'status' => 'Success',
             'data' => [],
@@ -170,23 +170,24 @@ class RewardController extends Controller
                     ], 422);
                 }
             }
-            
+
             $point = Point::where('user_id',$auth->id)->first();
             if($point && $point->points >= $reward->points)
             {
-                $request_id = rand(1000,9999);
+                $maxRequestId = RewardRequest::max('request_id');
+                $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
                 $reward_request = RewardRequest::create([
                     'reward_id' => $request->reward_id,
                     'user_id' => $auth->id,
                     'request_id' => $request_id,
                 ]);
-                
+
                 $track_point = TrackPoint::create([
                     'point_id' => $point->id,
                     'point' => - $reward->points,
                     'comment' => 'Discount '. $reward->points . ' نقاط بسبب التقديم على مكافاه',
                 ]);
-                
+
                 return response()->json([
                     'status' => 'Success',
                     'data' => new RewardRequestResource(RewardRequest::with('reward','user')->findorFail($reward_request->id)),
@@ -202,7 +203,7 @@ class RewardController extends Controller
                 ], 422);
             }
         }
-        
+
         return response()->json([
             'status' => 'Fail',
             'data' => [],
@@ -261,13 +262,14 @@ class RewardController extends Controller
                     'message' => 'You Should Be User',
                 ], 422);
             }
-            
-            $request_id = rand(1000,9999);
+
+            $maxRequestId = RewardRequest::max('request_id');
+            $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
             $reward_request = RewardRequest::create([
                 'user_id' => $auth->id,
                 'request_id' => $request_id,
             ]);
-            
+
             foreach($request->offer as $offerId)
             {
                 RequestGuide::create([
@@ -275,7 +277,7 @@ class RewardController extends Controller
                     'offer_id' => $offerId,
                 ]);
             }
-            
+
             DB::commit();
             return response()->json([
                 'status' => 'Success',
@@ -317,7 +319,7 @@ class RewardController extends Controller
             return $query->where('done_by_service_provider', $request->service_provider);
         })
         ->get();
-        
+
         return response()->json([
             'status' => 'Success',
             'data' => RewardRequestResource::collection($requests),
@@ -476,7 +478,7 @@ class RewardController extends Controller
                 ]);
             }
         }
-        
+
         return response()->json([
             'status' => 'Fail',
             'data' => [],

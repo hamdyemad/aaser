@@ -19,7 +19,7 @@ class GuideResource extends JsonResource
             'location' => $this->location,
             'location_link' => $this->location_link,
             'website_url' => $this->website_url,
-            'rate' => $this->rate,
+            'rate' => round($this->rate()->avg('rate'), 2), // average rate
             'num_rate' => $this->rate()->count(),
             'send_notification' => $this->send_notification,
             'type' => new GuideTypeResource($this->whenLoaded('type')),

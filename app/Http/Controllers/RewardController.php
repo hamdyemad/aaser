@@ -176,7 +176,8 @@ class RewardController extends Controller
             $point = Point::where('user_id',$auth->id)->first();
             if($point && $point->points >= $reward->points)
             {
-                $request_id = rand(1000,9999);
+                $maxRequestId = RewardRequest::max('request_id');
+                $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
                 $reward_request = RewardRequest::create([
                     'reward_id' => $request->reward_id,
                     'user_id' => $auth->id,
@@ -264,7 +265,8 @@ class RewardController extends Controller
                 ], 422);
             }
 
-            $request_id = rand(1000,9999);
+            $maxRequestId = RewardRequest::max('request_id');
+            $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
             $reward_request = RewardRequest::create([
                 'user_id' => $auth->id,
                 'request_id' => $request_id,

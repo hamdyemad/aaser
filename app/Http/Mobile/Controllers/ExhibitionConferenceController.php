@@ -90,7 +90,9 @@ class ExhibitionConferenceController extends Controller
             'jop' => $request->jop,
         ]);
 
-        $request_id = rand(1000,9999);
+        $maxRequestId = RewardRequest::max('request_id');
+        $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
+
         $reward_request = RewardRequest::create([
             'visitor_exhibition_conference_id' => $visitor->id,
             'user_id' => auth()->id(),
@@ -116,7 +118,8 @@ class ExhibitionConferenceController extends Controller
             'registeration_type' => $request->registeration_type,
         ]);
 
-        $request_id = rand(1000,9999);
+        $maxRequestId = RewardRequest::max('request_id');
+        $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
         $reward_request = RewardRequest::create([
             'participant_exhibition_conference_id' => $participant->id,
             'user_id' => auth()->id(),
