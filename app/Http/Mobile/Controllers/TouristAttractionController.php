@@ -91,7 +91,7 @@ class TouristAttractionController extends Controller
     public function add_rate(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'rate' => 'required|min:1|max:10',
+            'rate' => 'required|min:1|max:5',
             'tourist_attraction_id' => ['required', 'exists:tourist_attractions,id'],
         ]);
 

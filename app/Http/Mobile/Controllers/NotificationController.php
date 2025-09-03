@@ -23,13 +23,30 @@ class NotificationController extends Controller
     {
         $now = Carbon::now()->toDateTimeString();
         $auth = $request->user();
+
+        $types = [
+            'tourist-attractions',
+            'entertainment',
+            'episodes',
+            'participants',
+            'guide',
+            'replace-points',
+            'sponsors',
+            'stock-points',
+            'tourist-attractions'
+        ];
         Notification::where('user_id', $auth->id)->where('read_at', null)->update([
             'read_at' => $now,
         ]);
         $per_page = $request->per_page ?? 12;
         $notifications = Notification::where('user_id', $auth->id)->latest()->paginate($per_page);
         NotificationResource::collection($notifications);
-        return $this->sendRes('Notifications Returned Successfully', true, $notifications, [], 200);
+
+        $data = [
+            'types' => $types,
+            'notifications' => $notifications,
+        ];
+        return $this->sendRes('Notifications Returned Successfully', true, $data, [], 200);
     }
 
     public function countNotification(Request $request)

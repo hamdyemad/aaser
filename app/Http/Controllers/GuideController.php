@@ -36,7 +36,7 @@ class GuideController extends Controller
             $randomEmail = 'provider' . Str::uuid() . '@asser-service-provider.com';
             $randomPasswordPlain = Str::random(16);
             $randomPasswordHashed = Hash::make($randomPasswordPlain);
-        
+
             $guide = Guide::create([
                 'name' => $request->name,
                 'description' => $request->description,
@@ -48,7 +48,7 @@ class GuideController extends Controller
                 'website_url' => $request->website_url,
                 'type_id' => $request->type_id,
             ]);
-            
+
             $service_provider = ServiceProvider::create([
                 'name' => 'مقدم خدمة ' . $guide->name,
                 'email' => $randomEmail,
@@ -94,7 +94,7 @@ class GuideController extends Controller
                     Notification::create([
                         'user_id' => $user->id,
                         'message' => 'يوجد دليل جديد '. $guide->name,
-                        'page' => 'guide-page',
+                        'page' => 'guide',
                         'product_name' => $guide->name,
                         'product_id' => $guide->id,
                     ]);

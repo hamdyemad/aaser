@@ -97,7 +97,7 @@ class ReplacePointController extends Controller
                     Notification::create([
                         'user_id' => $user->id,
                         'message' => 'يوجد مكافئة جديدة '. $replace_point->reward_address,
-                        'page' => 'view-services',
+                        'page' => 'replace-points',
                         'product_name' => $replace_point->reward_address,
                         'product_id' => $replace_point->id,
                     ]);

@@ -97,7 +97,7 @@ class StockPointController extends Controller
                     Notification::create([
                         'user_id' => $user->id,
                         'message' => 'يوجد منتج جديد '. $stock_point->company_name,
-                        'page' => 'view-products',
+                        'page' => 'stock-points',
                         'product_name' => $stock_point->company_name,
                         'product_id' => $stock_point->id,
                     ]);
