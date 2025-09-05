@@ -59,14 +59,13 @@ Route::middleware(['auth:sanctum'])->group(function () {
     /////////////////
     Route::post('add_tourist_service',[TouristAttractionController::class,'touristeService']);
     //
-
     Route::post('add_activity_service',[EntertainmentActivityController::class,'activityService']);
 });
-Route::get('profileee',[UserController::class,'update_profileee']);
 
 Route::get('test', function() {
     return response()->json(['message' => 'API is working']);
 });
+        Route::get('provider__all_reward_request ',[RewardController::class,'adminAllRewardRequest']);
 
 // the admin
 Route::prefix('admin')->group(function () {
@@ -164,6 +163,7 @@ Route::prefix('admin')->group(function () {
         Route::post('add_reward_request',[RewardController::class,'addRewardRequest']);
         Route::post('add_offer_request',[RewardController::class,'addOfferRequest']);
         Route::get('all_reward_request',[RewardController::class,'allRewardRequest']);
+        Route::get('admin__all_reward_request',[RewardController::class,'adminAllRewardRequest']);
 
 
         /////

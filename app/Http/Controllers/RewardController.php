@@ -176,8 +176,7 @@ class RewardController extends Controller
             $point = Point::where('user_id',$auth->id)->first();
             if($point && $point->points >= $reward->points)
             {
-                $maxRequestId = RewardRequest::max('request_id');
-                $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
+                $request_id = rand(1000,9999);
                 $reward_request = RewardRequest::create([
                     'reward_id' => $request->reward_id,
                     'user_id' => $auth->id,
@@ -265,8 +264,7 @@ class RewardController extends Controller
                 ], 422);
             }
 
-            $maxRequestId = RewardRequest::max('request_id');
-            $request_id = $maxRequestId ? $maxRequestId + 1 : rand(1000, 9999);
+            $request_id = rand(1000,9999);
             $reward_request = RewardRequest::create([
                 'user_id' => $auth->id,
                 'request_id' => $request_id,
@@ -376,6 +374,79 @@ class RewardController extends Controller
             'message' => 'Reward Requests Returned Successfully',
         ]);
     }
+
+    public function adminAllRewardRequest(Request $request)
+{
+    $show_by_service_provider_id = request('show_by_service_provider_id');
+
+    $requests = RewardRequest::with(
+        'reward', 'user', 'provider',
+        'requestGuide.offer',
+        'requestStockPoint', 'requestReplacePoint',
+        'requestTouriste',
+        'requestActivity', 'visitorExhibitionConference', 'participantExhibitionConference'
+    )
+    ->when($request->filled('reward_id'), function($query) use($request){
+        return $query->where('reward_id', $request->reward_id);
+    })
+    ->when($request->filled('id'), function($query) use($request){
+        return $query->where('id', $request->id);
+    })
+    ->when($request->filled('visitor_exhibition_conference_id'), function($query) use($request){
+        return $query->where('visitor_exhibition_conference_id', $request->visitor_exhibition_conference_id);
+    })
+    ->when($request->filled('participant_exhibition_conference_id'), function($query) use($request){
+        return $query->where('participant_exhibition_conference_id', $request->participant_exhibition_conference_id);
+    })
+    // 🔥 تم إزالة فلترة user_id هنا
+    ->when($request->filled('request_id'), function($query) use($request){
+        return $query->where('request_id', $request->request_id);
+    })
+    ->when($request->filled('service_provider'), function($query) use($request){
+        return $query->where('done_by_service_provider', $request->service_provider);
+    })
+    ->when($request->filled('show_by_service_provider_id'), function($query) use($show_by_service_provider_id){
+        return $query
+            ->whereHas('requestTouriste.serviceTouristAttraction.specialized_provider',
+                function ($q) use ($show_by_service_provider_id) {
+                    $q->where('id', $show_by_service_provider_id);
+                })
+            ->orWhereHas('requestGuide.offer.specialized_provider',
+                function ($q) use ($show_by_service_provider_id) {
+                    $q->where('id', $show_by_service_provider_id);
+                })
+            ->orWhereHas('requestActivity.serviceActivity.specialized_provider',
+                function ($q) use ($show_by_service_provider_id) {
+                    $q->where('id', $show_by_service_provider_id);
+                })
+            ->orWhereHas('requestStockPoint.service.specialized_provider',
+                function ($q) use ($show_by_service_provider_id) {
+                    $q->where('id', $show_by_service_provider_id);
+                })
+            ->orWhereHas('requestReplacePoint.replaceReward.specialized_provider',
+                function ($q) use ($show_by_service_provider_id) {
+                    $q->where('id', $show_by_service_provider_id);
+                })
+            ->orWhereHas('visitorExhibitionConference.specialized_provider',
+                function ($q) use ($show_by_service_provider_id) {
+                    $q->where('id', $show_by_service_provider_id);
+                })
+            ->orWhereHas('participantExhibitionConference.specialized_provider',
+                function ($q) use ($show_by_service_provider_id) {
+                    $q->where('id', $show_by_service_provider_id);
+                });
+    })
+    ->latest();
+
+    $requests = $requests->get();
+    $requests = RewardRequestResource::collection($requests);
+
+    return response()->json([
+        'status' => 'Success',
+        'data' => $requests,
+        'message' => 'Reward Requests Returned Successfully',
+    ]);
+}
 
     public function doneRequest(Request $request, $id)
     {

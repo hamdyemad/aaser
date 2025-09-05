@@ -16,16 +16,12 @@ class EditSettingRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => 'nullable',
             'email' => 'nullable',
             'phone' => 'nullable',
             'address' => 'nullable',
-            'link' => 'nullable',
             'register_point' => 'required|min:1|numeric',
             'view_point' => 'required|min:1|numeric',
-            'share_point' => 'required|min:1|numeric',
-            'invitation_point' => 'required|min:1|numeric',
-            'complete_profile_point' => 'required|min:1|numeric',
+            'map' => 'nullable',
         ];
     }
 
