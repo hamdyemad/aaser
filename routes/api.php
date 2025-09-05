@@ -59,8 +59,10 @@ Route::middleware(['auth:sanctum'])->group(function () {
     /////////////////
     Route::post('add_tourist_service',[TouristAttractionController::class,'touristeService']);
     //
+
     Route::post('add_activity_service',[EntertainmentActivityController::class,'activityService']);
 });
+Route::get('profileee',[UserController::class,'update_profileee']);
 
 Route::get('test', function() {
     return response()->json(['message' => 'API is working']);

